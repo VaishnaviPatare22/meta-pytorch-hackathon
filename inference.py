@@ -34,7 +34,6 @@ async def run_task(task_name):
     log_start(task=task_name, env="cloud-cost-env", model=MODEL_NAME)
 
     for step in range(1, env.max_steps + 1):
-        # 1. Create a clear prompt for the LLM
         state_json = json.dumps(state["servers"], indent=2)
         prompt = f"""
 You are an expert FinOps agent. Your goal is to minimize cloud costs by terminating idle, non-critical servers.
@@ -49,13 +48,11 @@ AVAILABLE ACTIONS:
 - "wait"
 Respond with ONLY the action string.
 """
-
         action_str = "wait"
         action = {"action_type": "wait", "server_id": None}
         error_message = "null"
 
         try:
-            # 2. Call the LLM
             completion = client.chat.completions.create(
                 model=MODEL_NAME,
                 messages=[{"role": "user", "content": prompt}],
@@ -64,8 +61,8 @@ Respond with ONLY the action string.
             )
             llm_response = completion.choices.message.content.strip()
 
-            # 3. Parse Response
             parts = llm_response.split()
+            # FIXED: Check parts and access parts correctly
             if len(parts) == 2 and parts == "terminate" and parts in state["servers"]:
                 action_str = llm_response
                 action = {"action_type": "terminate", "server_id": parts}
@@ -73,11 +70,9 @@ Respond with ONLY the action string.
                 error_message = f"invalid_response:_{llm_response[:10].replace(' ', '_')}"
 
         except Exception as e:
-            # This line is now fixed to avoid the AttributeError
             error_message = f"api_error:_{type(e).__name__}"
             print(f"An error occurred during API call: {e}")
 
-        # 4. Take action
         state, reward, done, info = env.step(action)
         total_reward += reward
         rewards.append(reward)
