@@ -3,12 +3,14 @@ import pandas as pd
 from environment import CloudCostEnv
 import os
 
-# HANDLE JUDGE RESET SIGNAL IMMEDIATELY
-if "action" in st.query_params and st.query_params["action"] == "reset":
-    st.session_state.env = CloudCostEnv()
-    st.session_state.current_state = st.session_state.env.reset()
-    st.write("OK")
-    st.stop()
+try:
+    if st.context.headers.get("X-OpenEnv-Reset") or "reset" in st.query_params:
+        st.session_state.env = CloudCostEnv()
+        st.session_state.current_state = st.session_state.env.reset()
+        st.write("OK")
+        st.stop()
+except Exception:
+    pass
 
 st.set_page_config(page_title="FinOps AI Optimizer", page_icon="☁️", layout="wide")
 

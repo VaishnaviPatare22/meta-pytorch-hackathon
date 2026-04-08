@@ -9,10 +9,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy all files
 COPY . .
 
-# --- FOR OPENENV VALIDATION ---
+
 ENV STREAMLIT_SERVER_ENABLE_CORS=false
 ENV STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=false
-ENV STREAMLIT_SERVER_COOKIE_SECRET=dev_secret
+ENV STREAMLIT_SERVER_ENABLE_STATIC_SERVING=true
 
 # Expose the correct port
 EXPOSE 7860
