@@ -4,14 +4,12 @@ from environment import CloudCostEnv
 import os
 
 # --- 1. OPENENV VALIDATION LOGIC (MANDATORY FOR PHASE 1) ---
-# This part ensures the automated judge can "reset" your app without a 403 error.
-# We use query parameters to simulate the /reset behavior in Streamlit.
 query_params = st.query_params
 if "action" in query_params and query_params["action"] == "reset":
     st.session_state.env = CloudCostEnv()
     st.session_state.current_state = st.session_state.env.reset()
     st.session_state.logs = ["Environment Reset by Validator"]
-    st.write("OK") # The judge looks for a 200 OK response
+    st.write("OK")
     st.stop()
 
 # --- 2. PAGE CONFIG & STYLING ---
