@@ -3,16 +3,13 @@ import pandas as pd
 from environment import CloudCostEnv
 import os
 
-# --- 1. OPENENV VALIDATION LOGIC (MANDATORY FOR PHASE 1) ---
-query_params = st.query_params
-if "action" in query_params and query_params["action"] == "reset":
+if st.context.headers.get("X-OpenEnv-Reset") or st.query_params.get("action") == "reset":
     st.session_state.env = CloudCostEnv()
     st.session_state.current_state = st.session_state.env.reset()
-    st.session_state.logs = ["Environment Reset by Validator"]
+    st.session_state.logs = []
     st.write("OK")
     st.stop()
 
-# --- 2. PAGE CONFIG & STYLING ---
 st.set_page_config(page_title="FinOps AI Optimizer", page_icon="☁️", layout="wide")
 
 st.markdown("""
@@ -34,7 +31,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. INITIALIZATION ---
 if 'env' not in st.session_state:
     st.session_state.env = CloudCostEnv()
     st.session_state.current_state = st.session_state.env.reset()
@@ -42,7 +38,6 @@ if 'env' not in st.session_state:
 
 env = st.session_state.env
 
-# --- 4. SIDEBAR NAVIGATION ---
 with st.sidebar:
     st.image("https://img.icons8.com/fluency/100/cloud-lighting.png", width=80)
     st.title("FinOps Control")
@@ -54,7 +49,6 @@ with st.sidebar:
         st.session_state.logs = []
         st.rerun()
 
-# --- 5. MAIN DASHBOARD ---
 st.title("☁️ Cloud FinOps AI Optimizer")
 st.caption("Monitoring & Automated Cost Reduction Engine")
 
@@ -72,7 +66,7 @@ else:
 
 st.divider()
 
-col_left, col_right = st.columns(2) # Left is wider
+col_left, col_right = st.columns(2)
 
 with col_left:
     st.subheader("🖥️ Real-time Server Inventory")
