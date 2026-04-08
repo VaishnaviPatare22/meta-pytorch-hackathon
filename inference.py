@@ -5,16 +5,19 @@ from openai import OpenAI
 from server.environment import CloudCostEnv
 
 # --- Configuration and Client Initialization ---
+# Reading environment variables with defaults where required
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 HF_TOKEN = os.getenv("HF_TOKEN") 
 
+# Initializing OpenAI client as required
 client = OpenAI(
     base_url=API_BASE_URL,
     api_key=HF_TOKEN
 )
 
 # --- Required Logging Functions ---
+# Format follows exact hackathon requirements
 def log_start(task, env, model):
     print(f"[START] task={task} env={env} model={model}")
 
@@ -53,6 +56,7 @@ Respond with ONLY the action string.
         error_message = "null"
 
         try:
+            # LLM Decision-Making Logic using OpenAI client
             completion = client.chat.completions.create(
                 model=MODEL_NAME,
                 messages=[{"role": "user", "content": prompt}],
@@ -62,7 +66,7 @@ Respond with ONLY the action string.
             llm_response = completion.choices.message.content.strip()
 
             parts = llm_response.split()
-            # FIXED: Check parts and access parts correctly
+            # Validating and parsing the action
             if len(parts) == 2 and parts == "terminate" and parts in state["servers"]:
                 action_str = llm_response
                 action = {"action_type": "terminate", "server_id": parts}
@@ -70,9 +74,11 @@ Respond with ONLY the action string.
                 error_message = f"invalid_response:_{llm_response[:10].replace(' ', '_')}"
 
         except Exception as e:
+            # Capturing API errors for the step log
             error_message = f"api_error:_{type(e).__name__}"
             print(f"An error occurred during API call: {e}")
 
+        # Applying action to the environment
         state, reward, done, info = env.step(action)
         total_reward += reward
         rewards.append(reward)
@@ -82,11 +88,13 @@ Respond with ONLY the action string.
         if done:
             break
 
+    # Final summary logging
     score = max(min(total_reward / 100, 1.0), 0.0)
     success = score > 0.5
     log_end(success, step, score, rewards)
 
 async def main():
+    # Running the required 3 tasks
     tasks = ["task-1", "task-2", "task-3"]
     for task in tasks:
         await run_task(task)
