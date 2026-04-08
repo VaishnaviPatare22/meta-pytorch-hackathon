@@ -1,0 +1,14 @@
+name: finops-ai-optimizer
+version: "0.1.0"
+entrypoint: inference.py
+description: "Simulates a Cloud FinOps task managing idle server resources."
+tasks:
+  - id: "easy-idle-cleanup"
+    difficulty: "easy"
+    description: "Terminate 2 idle non-critical servers."
+  - id: "medium-balanced-opt"
+    difficulty: "medium"
+    description: "Maximize savings while CPU usage is high."
+  - id: "hard-critical-survival"
+    difficulty: "hard"
+    description: "Manage costs during a spike without killing critical DBs."
