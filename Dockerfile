@@ -1,4 +1,4 @@
-FROM python:3.14-slim
+FROM python:3.9
 
 WORKDIR /app
 
@@ -6,11 +6,15 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy everything
+# Copy all files
 COPY . .
 
-# Expose the port for the validator/ping
+# --- FOR OPENENV VALIDATION ---
+ENV STREAMLIT_SERVER_ENABLE_CORS=false
+ENV STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=false
+
+# Expose the correct port
 EXPOSE 7860
 
-# Command to run your Streamlit UI (as the server)
+# Run the app
 CMD ["streamlit", "run", "server/app.py", "--server.port", "7860", "--server.address", "0.0.0.0"]
