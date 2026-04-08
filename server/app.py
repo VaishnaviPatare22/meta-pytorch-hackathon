@@ -3,10 +3,10 @@ import pandas as pd
 from environment import CloudCostEnv
 import os
 
-if st.context.headers.get("X-OpenEnv-Reset") or st.query_params.get("action") == "reset":
+# HANDLE JUDGE RESET SIGNAL IMMEDIATELY
+if "action" in st.query_params and st.query_params["action"] == "reset":
     st.session_state.env = CloudCostEnv()
     st.session_state.current_state = st.session_state.env.reset()
-    st.session_state.logs = []
     st.write("OK")
     st.stop()
 
