@@ -1,15 +1,20 @@
-from openai import OpenAI
 import os
+from openai import OpenAI
+import asyncio
+from server.environment import CloudCostEnv
 
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+HF_TOKEN = os.getenv("HF_TOKEN", "dummy_token_for_local_test")
 client = OpenAI(
-    base_url=os.getenv("API_BASE_URL", "https://api.openai.com/v1"),
-    api_key=os.getenv("HF_TOKEN")
+    base_url=API_BASE_URL,
+    api_key=HF_TOKEN
 )
 
 # Dummy call 
 try:
     client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=MODEL_NAME,
         messages=[{"role": "user", "content": "test"}]
     )
 except:
