@@ -1,18 +1,16 @@
 import streamlit as st
 import pandas as pd
-from environment import CloudCostEnv
 import os
+from environment import CloudCostEnv 
 
-# --- 1. MANDATORY OPENENV RESET HANDLER ---
-try:
-    if st.context.headers.get("X-OpenEnv-Reset") or st.query_params.get("action") == "reset":
-        st.session_state.env = CloudCostEnv()
-        st.session_state.current_state = st.session_state.env.reset()
-        st.session_state.logs = []
-        st.write("OK")
-        st.stop()
-except Exception:
-    pass
+# --- MANDATORY RESET HANDLER ---
+if st.query_params.get("action") == "reset" or "reset" in st.query_params:
+    st.write("OK")
+    st.stop()
+
+if st.context.headers.get("X-OpenEnv-Reset"):
+    st.write("OK")
+    st.stop()
 
 # --- 2. PAGE CONFIGURATION ---
 st.set_page_config(page_title="FinOps AI Optimizer", layout="wide")
