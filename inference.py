@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
 from environment import CloudCostEnv
@@ -11,15 +12,18 @@ class ResetRequest(BaseModel):
     task_id: str
     seed: int = 42
 
-# --- REQUIRED RESET ENDPOINT ---
+# --- FIXED RESET ENDPOINT (IMPORTANT) ---
 @app.post("/reset")
-def reset(req: ResetRequest):
+def reset(req: Optional[ResetRequest] = None):
+    task_id = req.task_id if req else "default_task"
+    seed = req.seed if req else 42
+
     env = CloudCostEnv()
-    state = env.reset(seed=req.seed)
+    state = env.reset(seed=seed)
 
     return {
-        "task_id": req.task_id,
-        "seed": req.seed,
+        "task_id": task_id,
+        "seed": seed,
         "observation": state
     }
 
@@ -34,14 +38,14 @@ def log_end(success, steps, score, rewards):
     rewards_str = ",".join([f"{r:.2f}" for r in rewards])
     print(f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}")
 
-# --- RULE-BASED DECISION FUNCTION ---
+# --- RULE-BASED LOGIC ---
 def decide_action(state):
     for server_id, server in state["servers"].items():
         if not server["is_critical"] and server["cpu_usage"] < 40:
             return f"terminate {server_id}"
     return "wait"
 
-# --- CORE TASK RUNNER ---
+# --- TASK RUNNER ---
 def run_task(task_name):
     env = CloudCostEnv()
     state = env.reset()
@@ -83,7 +87,7 @@ def run_task(task_name):
 def home():
     return {"message": "FinOps Optimizer API Running 🚀"}
 
-# --- OPTIONAL LOCAL TEST ---
+# --- LOCAL TEST ---
 if __name__ == "__main__":
     tasks = ["task-1", "task-2", "task-3"]
     for task in tasks:
