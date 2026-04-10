@@ -1,8 +1,15 @@
+import os
 import json
 from typing import Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
+from openai import OpenAI
 from environment import CloudCostEnv
+
+client = OpenAI(
+    base_url=os.getenv("API_BASE_URL", "https://api.openai.com/v1"),
+    api_key=os.getenv("API_KEY", "dummy-key")
+)
 
 # --- FastAPI App ---
 app = FastAPI()
@@ -12,7 +19,7 @@ class ResetRequest(BaseModel):
     task_id: str
     seed: int = 42
 
-# --- FIXED RESET ENDPOINT (IMPORTANT) ---
+# --- RESET ENDPOINT ---
 @app.post("/reset")
 def reset(req: Optional[ResetRequest] = None):
     task_id = req.task_id if req else "default_task"
@@ -38,12 +45,36 @@ def log_end(success, steps, score, rewards):
     rewards_str = ",".join([f"{r:.2f}" for r in rewards])
     print(f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}")
 
-# --- RULE-BASED LOGIC ---
-def decide_action(state):
-    for server_id, server in state["servers"].items():
-        if not server["is_critical"] and server["cpu_usage"] < 40:
-            return f"terminate {server_id}"
-    return "wait"
+# --- LLM DECISION FUNCTION ---
+def get_action_from_llm(state):
+    prompt = f"""
+You are a FinOps AI agent.
+
+Terminate servers that:
+- are NOT critical
+- have CPU < 40
+
+Otherwise return: wait
+
+Servers:
+{json.dumps(state['servers'], indent=2)}
+
+Respond ONLY:
+terminate <server_id>
+OR
+wait
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print("LLM Error:", e)
+        return "wait"
 
 # --- TASK RUNNER ---
 def run_task(task_name):
@@ -52,11 +83,11 @@ def run_task(task_name):
     total_reward = 0
     rewards = []
 
-    log_start(task=task_name, env="cloud-cost-env", model="rule-based")
+    log_start(task=task_name, env="cloud-cost-env", model="llm")
 
     for step in range(1, env.max_steps + 1):
 
-        action_str = decide_action(state)
+        action_str = get_action_from_llm(state)
         error_message = "null"
 
         parts = action_str.split()
