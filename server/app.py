@@ -1,21 +1,22 @@
 import streamlit as st
 import pandas as pd
 import os
-from environment import CloudCostEnv 
+import json
+from environment import CloudCostEnv
 
-# --- MANDATORY RESET HANDLER ---
-if st.query_params.get("action") == "reset" or "reset" in st.query_params:
-    st.write("OK")
-    st.stop()
+if st.query_params.get("action") == "reset" or st.context.headers.get("X-OpenEnv-Reset"):
+    response_data = {
+        "task_id": st.query_params.get("task_id", "default_task"),
+        "seed": int(st.query_params.get("seed", 42)),
+        "observation": "initial state"
+    }
+    # Using st.json ensures the validator receives a clean JSON object
+    st.json(response_data)
+    st.stop() 
 
-if st.context.headers.get("X-OpenEnv-Reset"):
-    st.write("OK")
-    st.stop()
-
-# --- 2. PAGE CONFIGURATION ---
 st.set_page_config(page_title="FinOps AI Optimizer", layout="wide")
 
-# --- 3. STATE INITIALIZATION ---
+# --- STATE INITIALIZATION ---
 if 'env' not in st.session_state:
     st.session_state.env = CloudCostEnv()
     st.session_state.current_state = st.session_state.env.reset()
@@ -23,7 +24,7 @@ if 'env' not in st.session_state:
 
 env = st.session_state.env
 
-# --- 4. SIDEBAR ---
+# --- SIDEBAR ---
 with st.sidebar:
     st.title("FinOps Control")
     st.info(f"Model: {os.getenv('MODEL_NAME', 'gpt-4o-mini')}")
@@ -33,13 +34,14 @@ with st.sidebar:
         st.session_state.logs = []
         st.rerun()
 
-# --- 5. DASHBOARD METRICS ---
+# --- DASHBOARD METRICS ---
 st.title("Cloud FinOps AI Optimizer")
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("Total Saved", f"${env.total_money_saved}")
 m2.metric("Step", f"{env.current_step}/{env.max_steps}")
 
+# Check for failures
 is_failed = any(s['is_critical'] and s['status'] == 'terminated' for s in env.servers.values())
 if is_failed:
     m3.error("CRITICAL FAILURE")
@@ -50,7 +52,7 @@ else:
 
 st.divider()
 
-# --- 6. MAIN CONTENT LAYOUT ---
+# --- MAIN CONTENT LAYOUT ---
 col_left, col_right = st.columns(2)
 
 with col_left:
